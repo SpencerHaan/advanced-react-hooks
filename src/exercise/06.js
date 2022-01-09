@@ -39,13 +39,28 @@ function useToggle({
   const on = onIsControlled ? controlledOn : state.on
 
   const hasOnChange = Boolean(onChange)
+  const isStateControlled = onIsControlled && hasOnChange
+  const [stateControlled, setStateControlled] = React.useState(isStateControlled)
   React.useEffect(() => {
     warning(
-      (onIsControlled && hasOnChange) || hasOnChange || readOnly,
+      stateControlled || hasOnChange || readOnly,
       `Warning: Failed prop type: You provided a \`on\` prop to a form field without an \`onChange\` handler. This will 
       render a read-only field. Set either \`onChange\` or \`readOnly\`.`
     )
-  }, [hasOnChange, onIsControlled, readOnly])
+    warning(
+      !(stateControlled !== isStateControlled && stateControlled === false),
+      `Warning: A component is changing an uncontrolled input of type undefined to be controlled. Input elements should 
+      not switch from uncontrolled to controlled (or vice versa). Decide between using a controlled or uncontrolled 
+      input element for the lifetime of the component.`
+    )
+    warning(
+      !(stateControlled !== isStateControlled && stateControlled === true),
+      `Warning: A component is changing a controlled input of type undefined to be uncontrolled. Input elements should 
+      not switch from controlled to uncontrolled (or vice versa). Decide between using a controlled or uncontrolled 
+      input element for the lifetime of the component.`
+    )
+    setStateControlled(isStateControlled)
+  }, [stateControlled, setStateControlled, isStateControlled, hasOnChange, readOnly])
 
   function dispatchWithOnChange(action) {
     if (!onIsControlled) {
