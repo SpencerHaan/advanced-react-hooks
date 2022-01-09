@@ -38,29 +38,30 @@ function useToggle({
   const onIsControlled = controlledOn != null
   const on = onIsControlled ? controlledOn : state.on
 
-  const hasOnChange = Boolean(onChange)
-  const isStateControlled = onIsControlled && hasOnChange
-  const [stateControlled, setStateControlled] = React.useState(isStateControlled)
+  const {current: onWasControlled} = React.useRef(onIsControlled)
   React.useEffect(() => {
     warning(
-      stateControlled || hasOnChange || readOnly,
-      `Warning: Failed prop type: You provided a \`on\` prop to a form field without an \`onChange\` handler. This will 
-      render a read-only field. Set either \`onChange\` or \`readOnly\`.`
+      !(onIsControlled && !onWasControlled),
+      `\`useToggle\` is changing from uncontrolled to controlled. Components should not switch from uncontrolled to
+      controlled (or vice versa). Decide between using controlled or uncontrolled \`useToggle\` for the lifetime of the
+      component. Check the \`on\` prop.`
     )
     warning(
-      !(stateControlled !== isStateControlled && stateControlled === false),
-      `Warning: A component is changing an uncontrolled input of type undefined to be controlled. Input elements should 
-      not switch from uncontrolled to controlled (or vice versa). Decide between using a controlled or uncontrolled 
-      input element for the lifetime of the component.`
+      !(!onIsControlled && onWasControlled),
+      `\`useToggle\` is changing from controlled to uncontrolled. Components should not switch from uncontrolled to
+      controlled (or vice versa). Decide between using controlled or uncontrolled \`useToggle\` for the lifetime of the
+      component. Check the \`on\` prop.`
     )
+  }, [onIsControlled, onWasControlled])
+
+  const hasOnChange = Boolean(onChange)
+  React.useEffect(() => {
     warning(
-      !(stateControlled !== isStateControlled && stateControlled === true),
-      `Warning: A component is changing a controlled input of type undefined to be uncontrolled. Input elements should 
-      not switch from controlled to uncontrolled (or vice versa). Decide between using a controlled or uncontrolled 
-      input element for the lifetime of the component.`
+      !(!hasOnChange && onIsControlled && !readOnly),
+      `An \`on\` prop was provided to \`useToggle\` without an \`onChange\` handler. This will render a read-only 
+      toggle. If you want it to be mutable, use \`initialOn\`. Otherwise, set \`onChange\` or \`readOnly\`.`
     )
-    setStateControlled(isStateControlled)
-  }, [stateControlled, setStateControlled, isStateControlled, hasOnChange, readOnly])
+  }, [hasOnChange,  onIsControlled, readOnly])
 
   function dispatchWithOnChange(action) {
     if (!onIsControlled) {
